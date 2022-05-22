@@ -1,0 +1,55 @@
+<header>
+
+    <nav class="navbar navbar-expand-lg bg-light">
+        <div class="container-fluid">
+            <a class="nav-link" href='{% url 'index' %}'> Главная</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item" >
+                {% if login %}
+                <div class="row align-items-start">
+                    <div class="col">
+                        <a class="nav-link disabled" style='font-size: 16px;color: black;' href='{% url 'out' %}'>{{login}}</a>
+                        {% comment %} {{login}} {% endcomment %}
+                    </div>
+                    <div class="col">
+                        <a class="nav-link" href='{% url 'out' %}'>Выход</a>
+                    </div>
+                </div>
+                {% else %}
+                    <a class="nav-link" href='{% url 'login' %}'>Авторизация</a>
+                {% endif %}
+              </li>
+              <li class="nav-item">
+                {% if login %}
+                {% else %}
+                    <a class="nav-link" href='{% url 'reg' %}'> Регистрация </a>
+                {% endif %}
+              </li>
+              <li class="nav-item">
+                <a class="nav-link disabled" style='font-size: 16px;color: black;'>Автоматизированная Справочная Система "Навигация в городе"</a>
+              </li>
+            </ul>
+            {% comment %} <form class="d-flex" role="search">
+              <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+              <button class="btn btn-outline-success" type="submit">Search</button>
+            </form> {% endcomment %}
+          </div>
+        </div>
+      </nav>
+
+ 
+   
+    {% comment %} {% if login %}
+        {{login}}
+        <a href='{% url 'out' %}'>Выход</a>
+    {% else %}
+         <a href='{% url 'login' %}'>Авторизация</a>
+         <a href='{% url 'reg' %}'>Регистрация</a>
+    {% endif %} {% endcomment %}
+    
+    
+</header>

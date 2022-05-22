@@ -1,0 +1,321 @@
+{% extends 'base/index.html' %}
+{% load static %}
+<style> 
+    .ymaps-2-1-79-map{
+        width:100%
+        height:100%
+    }
+</style>
+{% block title %}Новая главная страница {% endblock title %} 
+{% block main %} 
+
+
+
+
+
+
+{% comment %} <button type="button" class="btn btn-primary">Primary</button>
+<button type="button" class="btn btn-secondary">Secondary</button>
+<button type="button" class="btn btn-success">Success</button>
+<button type="button" class="btn btn-danger">Danger</button>
+<button type="button" class="btn btn-warning">Warning</button>
+<button type="button" class="btn btn-info">Info</button>
+<button type="button" class="btn btn-light">Light</button>
+<button type="button" class="btn btn-dark">Dark</button>
+<button type="button" class="btn btn-link">Link</button> {% endcomment %}
+
+
+
+{% comment %} {% for i in users %}
+<div>
+    {{i}}
+    {{i.password}}
+    </div>
+{% endfor %}  {% endcomment %}
+
+
+<div class="container">
+    <h2>Главная страница</h2>
+    <div class="row">
+        <div class="col">
+            <div id="map" style="height: 500px;" class="w-100"></div>
+        </div>
+        <div class="my-3 col">
+            <div class="row align-items-start">
+                <div class="col">
+                    <h1 class="h3 mb-3 fw-normal">Данные об объекте</h1>
+                </div>
+                <div class="col">
+                    <button type="button" class="btn btn-success" id='favorite'>Избранное</button>
+                </div>
+            </div>
+            <div>
+                <form action='{% url 'savep' %}'  method='post'>
+                    {% csrf_token %}
+                    <div class="form-floating" style='width:100%'>
+                        <input type="text" class="form-control"  placeholder="Password" name='name' id='plasename'>
+                        <label for="floatingPassword">Название объекта</label>
+                    </div>
+                    <div class="form-floating" style='width:100%'>
+                        <input type="text" class="form-control"  placeholder="name@example.com" name='latitude' id='latitude'>
+                        <label for="floatingInput">Широта</label>
+                    </div>
+                    <div class="form-floating" style='width:100%'>
+                        <input type="text" class="form-control"  placeholder="Password" name='longtitude' id='longtitude'>
+                        <label for="floatingPassword">Долгота</label>
+                    </div> 
+                    <div class="form-floating" style='width:100%'>
+                        <input type="text" class="form-control"  placeholder="Password" name='description' id='description'>
+                        <label for="floatingPassword">Данные об объекте</label>
+                    </div>
+                    <div>
+                        <div onclick="to2()" class="w-100 btn btn-lg btn-success mt-4">Отправится</div>
+                    </div>
+                    <div>
+                        <button class="w-100 btn btn-lg btn-primary mt-4" type="submit" name ='saveplace'>Сохранить объект</button>
+                    </div>
+                    <div class="form-floating">
+                        {{form.errors}}
+                    </div>
+                </form>
+                    
+            </div>
+        </div>
+    </div>
+    <div class="my-5 row" id="data_container">
+        {% for i in place %}
+        <div class="container" id='row{{i.instance.id}}'>
+            <div class="row align-items-start">
+            <div class="col">
+                {{i.name.value}}
+                {{i.latitude.value}}
+                {{i.longtitude.value}}
+            </div>
+            </div>
+            <div class="row align-items-start">
+                <div class="col-2">
+                    <button onclick="to({{i.instance.id}}, {{i.latitude.value}}, {{i.longtitude.value}})" id='to{{i.instance.id}}' type="button" class="btn btn-success">Сюда</button>
+                </div>
+                <div class="m-auto col-8">
+                    <button onclick="edit({{i.instance.id}})" id='edit{{i.instance.id}}' type="button" class="d-block m-auto btn btn-warning">Редактировать</button>
+                </div>
+                <div class="col-2">
+                    <button onclick="deletee({{i.instance.id}})" id='del{{i.instance.id}}' type="button" class="btn btn-danger">Удалить</button>
+                </div>
+            </div>
+        </div>
+        {% endfor %} 
+    </div>
+</div>
+
+{% endblock main %} 
+{% block script %}
+
+
+<script>
+    
+    let myMap;
+
+    function edit(id)
+    {
+        $.ajax({
+            data: {
+                'id': id
+            }, // получаяем данные формы
+            url: "{% url 'editplace' %}",
+            // если успешно, то
+            success: function (response) {
+                let name = response['name']
+                let longtitude = response['longtitude']
+                let latitude = response['latitude']
+                let description = response['description']
+
+                 document.getElementById('plasename').value = name
+                 document.getElementById('longtitude').value = longtitude
+                 document.getElementById('latitude').value = latitude
+                 document.getElementById('description').value = description
+            }
+        });
+    };
+    function deletee(id)
+    {
+        $.ajax({
+            data: {
+                'id': id
+            }, // получаяем данные формы
+            url: "{% url 'deleteplace' %}",
+            // если успешно, то
+            success: function (response) {
+                document.getElementById('row' + id).remove();
+            }
+        });
+    };
+
+    function to(id, latitude, longtitude)
+    {
+        var control = myMap.controls.get('routeButtonControl');
+        control.routePanel.state.set({
+            // Тип маршрутизации.
+            type: 'masstransit',
+            // Выключим возможность задавать пункт отправления в поле ввода.
+            fromEnabled: false,
+            // Адрес или координаты пункта отправления.
+            // Включим возможность задавать пункт назначения в поле ввода.
+            toEnabled: true,
+            // Адрес или координаты пункта назначения.
+            to: [latitude, longtitude]
+        });
+        control.state.set('expanded', true);
+    };
+
+    function to2()
+    {
+        let latitude = document.getElementById('latitude').value;
+        let longtitude = document.getElementById('longtitude').value;
+        let control = myMap.controls.get('routeButtonControl');
+
+        if(latitude != "" && longtitude != ""){
+            control.routePanel.geolocate('from');
+            control.state.set('expanded', true);
+            control.state.set('expanded', false);
+            control.routePanel.state.set({ 
+                // Тип маршрутизации.
+                type: 'masstransit',
+                // Выключим возможность задавать пункт отправления в поле ввода.
+                fromEnabled: false,
+                // Адрес или координаты пункта отправления.
+                // Включим возможность задавать пункт назначения в поле ввода.
+                toEnabled: true,
+                // Адрес или координаты пункта назначения.
+                to: [Number(latitude), Number(longtitude)]
+            });
+            control.state.set('expanded', true);
+        }
+    };
+
+    //var location = ymaps.geolocation.get(0).geometry.getcoordinates();
+    document.getElementById('plasename').readOnly=true;
+    document.getElementById('longtitude').readOnly=true;
+    document.getElementById('latitude').readOnly=true;
+    ymaps.ready(function () {
+    myMap = new ymaps.Map('map', {
+        center: [56.30161, 38.13607],
+        zoom: 9,
+        controls: ['routeButtonControl','geolocationControl']
+    });
+
+    let control = myMap.controls.get('routeButtonControl');
+    control.routePanel.geolocate('from');
+    control.state.set('expanded', true);
+    control.state.set('expanded', false);
+    control.routePanel.state.set({
+        // Тип маршрутизации.
+        type: 'masstransit',
+        // Выключим возможность задавать пункт отправления в поле ввода.
+        fromEnabled: false,
+        // Адрес или координаты пункта отправления.
+        // Включим возможность задавать пункт назначения в поле ввода.
+        toEnabled: true,
+        // Адрес или координаты пункта назначения.
+        //to: 'Ярославский вокзал' [1,2]
+    });
+
+    let myPlacemark;
+
+    myMap.events.add('click', function (e) { // обработка нажатия на карту
+        let coords = e.get('coords');
+        let latitude = document.getElementById('latitude');
+        
+        let longtitude = document.getElementById('longtitude');
+        
+        latitude.value = coords[0];
+        longtitude.value = coords[1];
+
+        // Если метка уже создана – просто передвигаем ее.
+        if (myPlacemark) {
+            myPlacemark.geometry.setCoordinates(coords);
+        }
+        // Если нет – создаем.
+        else {
+            myPlacemark = createPlacemark(coords);
+            myMap.geoObjects.add(myPlacemark);
+            // Слушаем событие окончания перетаскивания на метке.
+            myPlacemark.events.add('dragend', function () {
+                getAddress(myPlacemark.geometry.getCoordinates());
+            });
+        }
+        getAddress(coords);
+    });
+
+
+    function createPlacemark(coords) {
+        return new ymaps.Placemark(coords, {
+            iconCaption: 'поиск...'
+        }, {
+            preset: 'islands#violetDotIconWithCaption',
+            draggable: true
+        });
+    }
+
+    // Определяем адрес по координатам (обратное геокодирование).
+    function getAddress(coords) {
+        
+        myPlacemark.properties.set('iconCaption', 'поиск...');
+        ymaps.geocode(coords).then(function (res) {
+            var firstGeoObject = res.geoObjects.get(0);
+            let plasesurname = firstGeoObject.getAddressLine();
+            console.log(plasesurname);
+            let plasename = document.getElementById('plasename');
+            plasename.value = plasesurname;
+            
+
+            myPlacemark.properties
+                .set({
+                    // Формируем строку с данными об объекте.
+                    iconCaption: [
+                        // Название населенного пункта или вышестоящее административно-территориальное образование.
+                        firstGeoObject.getLocalities().length ? firstGeoObject.getLocalities() : firstGeoObject.getAdministrativeAreas(),
+                        // Получаем путь до топонима, если метод вернул null, запрашиваем наименование здания.
+                        firstGeoObject.getThoroughfare() || firstGeoObject.getPremise()
+                    ].filter(Boolean).join(', '),
+                    // В качестве контента балуна задаем строку с адресом объекта.
+                    balloonContent: firstGeoObject.getAddressLine()
+                });
+        });
+    }
+    
+  /*      // Создание экземпляра маршрута.
+        var multiRoute = new ymaps.multiRouter.MultiRoute({
+            // Точки маршрута.
+            // Обязательное поле. 
+            referencePoints: [
+                [56.30161, 38.13607],
+                [55.91383, 37.80826],
+               /* 'Москва, метро Смоленская',
+                'Москва, метро Арбатская',
+                [55.734876, 37.59308], // улица Льва Толстого.
+            ],
+            params: {
+                // Тип маршрута: на общественном транспорте.
+                routingMode: "masstransit"  
+              }
+        }, {
+            // Автоматически устанавливать границы карты так,
+            // чтобы маршрут был виден целиком.
+            boundsAutoApply: true
+        });
+
+        // Добавление маршрута на карту.
+        myMap.geoObjects.add(multiRoute);*/
+    });
+</script>
+
+<script>
+    document.getElementById('favorite').addEventListener('click', function () {
+        document.getElementById('data_container').classList.toggle("d-none")
+    })
+</script>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+{% endblock script %}
